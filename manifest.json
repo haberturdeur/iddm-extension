@@ -6,7 +6,7 @@
     "content_scripts": [
         {
             "js": [
-                "dist/content.js"
+                "content.js"
             ],
             "matches": [
                 "https://helceletka.iddm.cz/admin2/krouzky/*"

@@ -1,8 +1,10 @@
 const path = require('path');
+const ZipPlugin = require('zip-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
-    mode: 'development',
-    devtool: 'source-map',
+    mode: 'production',
+    devtool: 'inline-source-map',
     entry: {
         content: './src/content.ts',
     },
@@ -16,10 +18,23 @@ module.exports = {
         ],
     },
     resolve: {
-        extensions: ['.tsx', '.ts', '.js'],
+        extensions: ['.tsx', '.ts', '.js', '.json'],
     },
     output: {
         filename: '[name].js',
         path: path.resolve(__dirname, 'dist'),
     },
+    plugins: [
+        new ZipPlugin({
+            filename: 'extension.zip',
+            pathPrefix: '.',
+            include: [/\.js$/, /manifest\.json$/, /icon\.png$/],
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: 'manifest.json', to: 'manifest.json' },
+                { from: 'icon.png', to: 'icon.png' },
+            ],
+        }),
+    ]
 };
