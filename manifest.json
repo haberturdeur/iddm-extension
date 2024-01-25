@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "IDDM Rozšíření",
+    "description": "Rozšíření přidávájící funkce do aplikace IDDM",
+    "version": "1.0",
+    "content_scripts": [
+        {
+            "js": [
+                "dist/content.js"
+            ],
+            "matches": [
+                "https://helceletka.iddm.cz/admin2/krouzky/*"
+            ]
+        }
+    ]
+}
