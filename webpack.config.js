@@ -1,5 +1,4 @@
 const path = require('path');
-const ZipPlugin = require('zip-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
@@ -25,11 +24,6 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
     },
     plugins: [
-        new ZipPlugin({
-            filename: 'extension.zip',
-            pathPrefix: '.',
-            include: [/\.js$/, /manifest\.json$/, /icon\.png$/],
-        }),
         new CopyPlugin({
             patterns: [
                 { from: 'manifest.json', to: 'manifest.json' },
