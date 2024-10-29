@@ -73,15 +73,54 @@ function addCheckButton(doc: Document) {
     });
 }
 
-function addGenerationButton(doc: Document) {
+function addGenerationButtons(doc: Document) {
+    const parent = getButtonParent(doc)
+    if (!parent) throw new Error('Parent not found')
+
+    {
+        const btn = parent?.appendChild(doc.createElement('a'))
+        btn.textContent = 'Vygeneruj všechny schůzky'
+        btn.title = 'Vygeneruje všechny chybějící schůzky s náhodnou docházkou až do konce školního roku.'
+        btn.className = 'btn text-nowrap btn-primary ml-2'
+        btn.addEventListener('click', async () => {
+            await denik.generateMissingEntries(true);
+            location.reload();
+        });
+    }
+
+    {
+        const btn = parent?.appendChild(doc.createElement('a'))
+        btn.textContent = 'Předgeneruj schůzky'
+        btn.title = 'Předgeneruje všechny kroužky až do konce školního roku s prázdnou docházkou.'
+        btn.className = 'btn text-nowrap btn-primary ml-2'
+        btn.addEventListener('click', async () => {
+            await denik.generateMissingEntries(false);
+            location.reload();
+        });
+    }
+
+    {
+        const btn = parent?.appendChild(doc.createElement('a'))
+        btn.textContent = 'Doplň chybějící'
+        btn.title = 'Vygeneruje všechny chybějící schůzky po dnešní datum s náhodnou docházkou.'
+        btn.className = 'btn text-nowrap btn-primary ml-2'
+        btn.addEventListener('click', async () => {
+            await denik.generateMissingEntries(false);
+            location.reload();
+        });
+    }
+}
+
+function addDeleteButton(doc: Document) {
     const parent = getButtonParent(doc)
     if (!parent) throw new Error('Parent not found')
 
     const btn = parent?.appendChild(doc.createElement('a'))
-    btn.textContent = 'Vygeneruj schůzky'
+    btn.textContent = 'Smaž přebytečné schůzky'
+    btn.title = 'Smaže všechny schůzky, které jsou později než dnes.'
     btn.className = 'btn text-nowrap btn-primary ml-2'
     btn.addEventListener('click', async () => {
-        await denik.generateMissingEntries();
+        await denik.deleteOverflowEntries();
         location.reload();
     });
 }
@@ -90,6 +129,8 @@ export default async function inject(doc: Document) {
     await denik.fetch();
     console.log(denik);
     addCheckButton(doc);
-    addGenerationButton(doc);
+    addGenerationButtons(doc);
+    // Dangerous operation, can't be bothered to implement enabling, so it's just commented out
+    // addDeleteButton(doc);
     agregate(doc);
 }

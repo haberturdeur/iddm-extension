@@ -1,4 +1,4 @@
-import { formatDate, getDocument, parseDate } from "../utils";
+import { compareDate, formatDate, getDocument, parseDate } from "../utils";
 import { BaseParser } from "./base";
 import { getContext, retrieveContext } from "./context";
 
@@ -145,6 +145,7 @@ export type EntryData = {
 
 export class Entry implements BaseParser<EntryData> {
     url: string;
+    deleter: string | null = null;
     private doc: Document | null = null;
     private _description: Description | null = null;
 
@@ -231,8 +232,9 @@ export class Entry implements BaseParser<EntryData> {
         return entry
     }
 
-    constructor(url: string) {
+    constructor(url: string, deleter?: string | null) {
         this.url = url;
+        this.deleter = deleter || null;
     }
 
     async fetch() {
@@ -243,6 +245,22 @@ export class Entry implements BaseParser<EntryData> {
 
     async update(data: EntryData) {
         throw new Error('Not implemented');
+    }
+
+    async delete() {
+        if (!this.deleter) throw new Error("Not available");
+
+        console.debug("Deleting entry", this.date);
+
+        const doc = await getDocument(this.deleter);
+        const form = doc.getElementById('diary_drop') as HTMLFormElement | null;
+        if (!form) throw new Error('Form not found');
+
+        const formData = new FormData(form);
+        await getDocument(form.action, {
+            method: 'POST',
+            body: formData,
+        });
     }
 };
 
@@ -328,13 +346,14 @@ export class Denik implements BaseParser<DenikData> {
         const rows = candidates[0].getElementsByTagName('tbody')[0].getElementsByTagName('tr');
         if (!rows || rows.length === 0) throw new Error('No rows found')
 
-        const urls: string[] = []
+        const data: [string, string | null][] = []
         for (let row of rows) {
-            const ref = (row.attributes as any)['data-href'].value
-            urls.push(ref)
+            const ref: string = (row.attributes as any)['data-href'].value;
+            const deleter = (row.lastElementChild as HTMLTableCellElement | null)!.lastElementChild as HTMLAnchorElement | null;
+            data.push([ref, deleter!.href]);
         }
 
-        this.entries = urls.map((url) => new Entry(url));
+        this.entries = data.map(([url, deleter]) => new Entry(url, deleter));
         const requests = this.entries.map((entry) => entry.fetch());
         await Promise.all(requests);
     }
@@ -343,7 +362,7 @@ export class Denik implements BaseParser<DenikData> {
         throw new Error('Not implemented');
     }
 
-    async getMissingEntries() {
+    async getMissingEntries(upTo?: Date) {
         const doc = await retrieveContext('Kroužek', this.doc || undefined);
         if (!doc) throw new Error('Document not found');
 
@@ -351,7 +370,7 @@ export class Denik implements BaseParser<DenikData> {
         const _endDate = doc.getElementById('cin_ukonceni')!.getAttribute('value');
 
         const startDate = parseDate(_startDate!);
-        const endDate = parseDate(_endDate!);
+        const endDate = upTo || parseDate(_endDate!);
 
         const occupiedDates = this.entries.map((entry) => entry.date);
         const missingDates = [];
@@ -365,13 +384,24 @@ export class Denik implements BaseParser<DenikData> {
         return missingDates;
     }
 
-    async generateMissingEntries() {
-        const promises = (await this.getMissingEntries()).map(async (date) => {
+    async generateMissingEntries(randomAttendance?: boolean, endDate?: Date) {
+        const promises = (await this.getMissingEntries(endDate)).map(async (date) => {
             const builder = await this.newEntry();
             builder.date = date;
-            builder.randomAttendance();
+            if (randomAttendance)
+                builder.randomAttendance();
             await builder.build();
         });
+
+        await Promise.all(promises);
+    }
+
+    async deleteOverflowEntries(startDate: Date = new Date()) {
+        const occupiedDates = this.entries.map((entry) => entry.date);
+
+        const _startDate = formatDate(startDate);
+        const overflowEntries = this.entries.filter((entry) => compareDate(parseDate(entry.date), parseDate(_startDate))  < 0);
+        const promises = overflowEntries.map((entry) => entry.delete());
 
         await Promise.all(promises);
     }

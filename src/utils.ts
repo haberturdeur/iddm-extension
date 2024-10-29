@@ -25,3 +25,9 @@ export function formatDate(date: Date) {
 
     return `${dayPadded}.${monthPadded}.${year}`;
 }
+
+export function compareDate(left: Date, right: Date) {
+    const cmp = (_left: number, _right: number) => Math.sign(_right - _left);
+
+    return cmp(left.valueOf(), right.valueOf());
+}
