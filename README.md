@@ -15,6 +15,7 @@ Malý osobní projekt přídávající Quality-Of-Life funckcionalitu do admin s
 ## Podporované instance domečku
 
 - DDM Helceletova Brno
+- Pokud chcete přidat další instanci napište mi
 
 ## Předpoklady
 
