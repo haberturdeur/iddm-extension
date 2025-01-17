@@ -105,7 +105,7 @@ function addGenerationButtons(doc: Document) {
         btn.title = 'Vygeneruje všechny chybějící schůzky po dnešní datum s náhodnou docházkou.'
         btn.className = 'btn text-nowrap btn-primary ml-2'
         btn.addEventListener('click', async () => {
-            await denik.generateMissingEntries(false);
+            await denik.generateMissingEntries(false, new Date());
             location.reload();
         });
     }
